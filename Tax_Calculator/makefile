@@ -1,30 +1,23 @@
-# O compilador
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -Werror -Isrc
+LDFLAGS = -shared
 
-# Pastas (Ajustado para a sua estrutura)
-SRC_DIR = FinalProjec/src
-OBJ_DIR = FinalProjec/bin
-TEST_DIR = FinalProjec/tests
+TARGET = bin/libtaxes.dll
+SRCS = src/irpf.c src/irpj.c src/iof.c
+OBJS = src/irpf.o src/irpj.o src/iof.o
 
-# Encontrar todos os arquivos .c
-SRC = $(wildcard $(SRC_DIR)/*.c)
-# Mapear .c para .o dentro da pasta bin
-OBJ = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
+all: setup $(TARGET)
 
-# Executável
-EXEC = calculadora.exe
+setup:
+	mkdir -p bin
 
-# Regra principal
-all: $(EXEC)
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS)
 
-$(EXEC): $(OBJ) $(TEST_DIR)/main.c
-	$(CC) $(CFLAGS) $(TEST_DIR)/main.c $(OBJ) -o $(EXEC)
-
-# Regra para compilar cada .c em .o
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(OBJ_DIR)
+src/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ_DIR)/*.o $(EXEC)
+	rm -f src/*.o bin/*.dll
+
+.PHONY: all setup clean

@@ -1,31 +1,38 @@
 #include <stdio.h>
-#include "../src/irpj.h"
+#include "irpj.h" // Certifique-se que o caminho está correto
+#include "iof.h"
 
-int main(void)
-{
-    // Test Case 1: Successful calculation
-    Company my_company = {1, 50000.0, 10000.0, 0.32};
-    double result = 0.0;
+void test_irpj() {
+    printf("--- Testando IRPJ ---\n");
+    // Teste 1: Lucro Real (50k receita - 10k despesa = 40k base)
+    // Cálculo: (40k * 0.15) + (20k excedente * 0.10) = 6000 + 2000 = 8000
+    Company c1 = {REAL_PROFIT, 50000.0, 10000.0, 0.0};
+    double res_irpj = 0.0;
     
-    int status = calculate_irpj(my_company, &result);
-    
-    if (status == SUCCESS)
-    {
-        printf("Test 1 (Success) passed! Calculated IRPJ: R$ %.2f\n", result);
-    }
-    else
-    {
-        printf("Test 1 failed with status code: %d\n", status);
+    if (calculate_irpj(c1, &res_irpj) == SUCCESS) {
+        printf("IRPJ Lucro Real: R$ %.2f (Esperado: 8000.00)\n", res_irpj);
     }
 
-    // Test Case 2: Invalid regime test
-    Company invalid_company = {99, 1000.0, 0.0, 0.0};
-    status = calculate_irpj(invalid_company, &result);
-    
-    if (status == ERR_INVALID_REGIME)
-    {
-        printf("Test 2 (Invalid Regime) passed! System correctly caught the error.\n");
+    // Teste 2: Regime Inválido
+    Company c2 = {99, 1000.0, 0.0, 0.0};
+    if (calculate_irpj(c2, &res_irpj) == ERR_INVALID_REGIME) {
+        printf("Erro de regime detectado corretamente.\n\n");
     }
+}
 
+void test_iof() {
+    printf("--- Testando IOF ---\n");
+    // Teste: Crédito PJ (10k por 30 dias)
+    IOFRequest req = {IOF_CREDITO_PJ, 10000.0, 30};
+    double res_iof = 0.0;
+
+    if (calculate_iof(req, &res_iof) == SUCCESS) {
+        printf("IOF Crédito: R$ %.2f\n\n", res_iof);
+    }
+}
+
+int main(void) {
+    test_irpj();
+    test_iof();
     return 0;
 }
