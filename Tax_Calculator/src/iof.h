@@ -1,6 +1,12 @@
 #ifndef IOF_H
 #define IOF_H
 
+#ifdef _WIN32
+  #define TAX_API __declspec(dllexport)
+#else
+  #define TAX_API
+#endif
+
 /**
  * IOF (Tax on Financial Operations) - Constants and Definitions
  * CS50 Final Project - 2026 Updated Rates
@@ -37,6 +43,6 @@ typedef struct {
  * Function Prototype
  * Implementation found in iof.c
  */
-int calculate_iof(IOFRequest req, double *result);
+TAX_API int calculate_iof(IOFRequest req, double *result);
 
 #endif
