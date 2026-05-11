@@ -1,3 +1,4 @@
 {
-    "C_Cpp.default.compilerPath": "c:\\Users\\lucas\\OneDrive\\VScode\\Final Project\\.vscode\\c_cpp_properties.json"
+    "C_Cpp.default.compilerPath": "c:\\Users\\lucas\\OneDrive\\VScode\\Final Project\\.vscode\\c_cpp_properties.json",
+    "C_Cpp.dimInactiveRegions": false
 }
