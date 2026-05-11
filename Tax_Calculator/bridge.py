@@ -1,16 +1,6 @@
 import ctypes
 import os
 
-# 1. Load the dynamic library
-lib_path = os.path.join(os.getcwd(), 'bin', 'libtaxes.dll')
-
-try:
-    tax_lib = ctypes.CDLL(lib_path)
-except OSError as e:
-    print(f"ERROR: Could not load libtaxes.dll at {lib_path}")
-    print(f"Details: {e}")
-    exit(1)
-
 # --- C ENUMS MIRRORING ---
 class TaxRegime:
     REAL_PROFIT = 1
@@ -23,8 +13,6 @@ class IOFType:
     IOF_SEGUROS = 3
 
 # --- C STRUCTS MIRRORING ---
-
-# From irpj.h
 class Company(ctypes.Structure):
     _fields_ = [
         ("regime", ctypes.c_int),
@@ -33,63 +21,121 @@ class Company(ctypes.Structure):
         ("margin", ctypes.c_double)
     ]
 
-# From irpf.h
 class Person(ctypes.Structure):
     _fields_ = [
         ("income", ctypes.c_double),
         ("dependents", ctypes.c_int)
     ]
 
-# From iof.h - Updated to match your latest C struct
 class IOFRequest(ctypes.Structure):
     _fields_ = [
         ("amount", ctypes.c_double),
         ("days", ctypes.c_int),
-        ("operation_type", ctypes.c_int) # Matches IOFType in C
+        ("operation_type", ctypes.c_int) 
     ]
 
-# --- FUNCTION SIGNATURES ---
+# --- THE FLASK BRIDGE CLASS ---
+class TaxEngineBridge:
+    def __init__(self):
+        # 1. Reliable absolute pathing to prevent Flask routing errors
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        lib_path = os.path.join(base_dir, 'bin', 'libtaxes.dll')
 
-# IRPJ: int calculate_irpj(Company c, double *irpj)
-tax_lib.calculate_irpj.argtypes = [Company, ctypes.POINTER(ctypes.c_double)]
-tax_lib.calculate_irpj.restype = ctypes.c_int
+        try:
+            self.tax_lib = ctypes.CDLL(lib_path)
+        except OSError as e:
+            raise RuntimeError(f"ERROR: Could not load libtaxes.dll at {lib_path}\nDetails: {e}")
 
-# IRPF: int calculate_irpf(Person p, double *irpf)
-tax_lib.calculate_irpf.argtypes = [Person, ctypes.POINTER(ctypes.c_double)]
-tax_lib.calculate_irpf.restype = ctypes.c_int
+        self._setup_signatures()
 
-# IOF: int calculate_iof(IOFRequest req, double *result)
-# Fixed: Now only 2 arguments to match your iof.h
-tax_lib.calculate_iof.argtypes = [IOFRequest, ctypes.POINTER(ctypes.c_double)]
-tax_lib.calculate_iof.restype = ctypes.c_int
+    def _setup_signatures(self):
+        """Defines the C function signatures to ensure memory safety."""
+        # IRPJ
+        self.tax_lib.calculate_irpj.argtypes = [Company, ctypes.POINTER(ctypes.c_double)]
+        self.tax_lib.calculate_irpj.restype = ctypes.c_int
+        # IRPF
+        self.tax_lib.calculate_irpf.argtypes = [Person, ctypes.POINTER(ctypes.c_double)]
+        self.tax_lib.calculate_irpf.restype = ctypes.c_int
+        # IOF
+        self.tax_lib.calculate_iof.argtypes = [IOFRequest, ctypes.POINTER(ctypes.c_double)]
+        self.tax_lib.calculate_iof.restype = ctypes.c_int
 
-# --- UTILS FOR BRAZILIAN FORMATTING ---
-def format_brl(value):
-    """Formats a float to Brazilian Real currency string."""
-    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    def map_db_regime_to_c(self, db_regime_code):
+        """Translates the SQLite string codes into C Enum integers."""
+        mapping = {
+            'REAL': TaxRegime.REAL_PROFIT,
+            'PRESUMED': TaxRegime.PRESUMED_PROFIT
+            # Note: Add 'SIMPLES' here if you update the C code in the future
+        }
+        # Returns PRESUMED_PROFIT as a safe default fallback
+        return mapping.get(str(db_regime_code).upper(), TaxRegime.PRESUMED_PROFIT)
+
+    # --- FLASK WRAPPER METHODS ---
+    # These methods handle the conversion from HTML form Strings to C numeric types
+
+    def run_irpj(self, db_regime_code, revenue, expenses, margin):
+        regime_int = self.map_db_regime_to_c(db_regime_code)
+        
+        # Cast inputs to float/int to prevent crashes when receiving web data
+        comp = Company(
+            regime=regime_int,
+            revenue=float(revenue),
+            expenses=float(expenses),
+            margin=float(margin)
+        )
+        
+        result = ctypes.c_double(0.0)
+        status = self.tax_lib.calculate_irpj(comp, ctypes.byref(result))
+        
+        if status == 0:
+            return result.value
+        raise ValueError("C Engine failed to calculate IRPJ.")
+
+    def run_irpf(self, income, dependents):
+        person = Person(
+            income=float(income), 
+            dependents=int(dependents)
+        )
+        
+        result = ctypes.c_double(0.0)
+        status = self.tax_lib.calculate_irpf(person, ctypes.byref(result))
+        
+        if status == 0:
+            return result.value
+        raise ValueError("C Engine failed to calculate IRPF.")
+
+    def run_iof(self, amount, days, operation_type):
+        req = IOFRequest(
+            amount=float(amount),
+            days=int(days),
+            operation_type=int(operation_type)
+        )
+        
+        result = ctypes.c_double(0.0)
+        status = self.tax_lib.calculate_iof(req, ctypes.byref(result))
+        
+        if status == 0:
+            return result.value
+        raise ValueError("C Engine failed to calculate IOF.")
+
+    @staticmethod
+    def format_brl(value):
+        """Formats a float to a Brazilian Real currency string."""
+        return f"R$ {float(value):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # --- TEST EXECUTION ---
 if __name__ == "__main__":
     print("\n--- Tax Engine Bridge Test Suite ---")
+    bridge = TaxEngineBridge()
     
-    # 1. Test IRPJ
-    test_comp = Company(regime=TaxRegime.PRESUMED_PROFIT, revenue=100000.0, expenses=50000.0, margin=0.32)
-    irpj_res = ctypes.c_double(0.0)
-    if tax_lib.calculate_irpj(test_comp, ctypes.byref(irpj_res)) == 0:
-        print(f"IRPJ Test: {format_brl(irpj_res.value)}")
+    # Testing with simulated dynamic inputs (like they would come from Flask/DB)
+    test_db_code = "PRESUMED"
+    test_revenue = "100000.0" # Simulated string from an HTML form
+    test_expenses = "50000.0"
+    test_margin = "0.32"
 
-    # 2. Test IRPF
-    test_person = Person(income=5000.0, dependents=2)
-    irpf_res = ctypes.c_double(0.0)
-    if tax_lib.calculate_irpf(test_person, ctypes.byref(irpf_res)) == 0:
-        print(f"IRPF Test: {format_brl(irpf_res.value)}")
-
-    # 3. Test IOF
-    # Type 0 = CREDITO_PJ. We pass operation_type INSIDE the struct now.
-    test_iof_req = IOFRequest(amount=10000.0, days=30, operation_type=IOFType.IOF_CREDITO_PJ)
-    iof_res = ctypes.c_double(0.0)
-    
-    if tax_lib.calculate_iof(test_iof_req, ctypes.byref(iof_res)) == 0:
-        print(f"IOF Test:  {format_brl(iof_res.value)}")
-    else:
-        print("IOF Test:  Failed (Check C logic or recompilation)")
+    try:
+        res = bridge.run_irpj(test_db_code, test_revenue, test_expenses, test_margin)
+        print(f"IRPJ Dynamic Test: {bridge.format_brl(res)}")
+    except Exception as e:
+        print(f"Test Failed: {e}")
