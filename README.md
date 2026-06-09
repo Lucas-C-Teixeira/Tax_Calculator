@@ -22,19 +22,52 @@ The primary goal of this project was not only to create a functional tax calcula
 
 # Understanding the Brazilian Tax System
 
-Before discussing the implementation, it is important to understand the problem this project aims to solve.
+Before discussing the implementation details, it is important to understand the taxes calculated by this system.
 
-Brazil has one of the most complex tax systems in the world. Individuals and businesses are subject to different taxation rules, calculation methods, and reporting requirements.
+Brazil has one of the most complex tax systems in the world, with different rules for individuals and businesses. This project focuses on two major federal taxes: IRPF (Individual Income Tax) and IRPJ (Corporate Income Tax).
 
 ## IRPF – Individual Income Tax
 
-IRPF stands for *Imposto de Renda da Pessoa Física* (Individual Income Tax). Taxpayers may reduce their taxable income through legally allowed deductions such as dependents and deductible expenses.
+IRPF (Imposto de Renda da Pessoa Física) is a progressive tax applied to an individual's annual income. The amount of tax owed depends on the taxpayer's taxable income after deductions.
+
+In this system, the user provides:
+
+Annual gross income
+Number of dependents
+Deductible expenses
+
+The application first calculates the taxable income:
+
+Taxable Income = Gross Income − Deductions
+
+After determining the taxable income, the system applies the official progressive tax brackets. Each portion of income is taxed according to its corresponding bracket, rather than applying a single rate to the entire income.
+
+This approach reproduces the way the Brazilian Federal Revenue Service calculates income tax. The final result includes:
+
+Taxable income
+Effective tax rate
+Total tax due
 
 ## IRPJ – Corporate Income Tax
 
-IRPJ stands for *Imposto de Renda da Pessoa Jurídica* (Corporate Income Tax).
+IRPJ (Imposto de Renda da Pessoa Jurídica) is the corporate income tax applied to businesses operating in Brazil.
 
-This project supports:
+The application supports two taxation regimes:
+
+Real Profit (Lucro Real)
+
+Under the Real Profit regime, taxes are calculated based on the company's actual profit.
+
+The system receives:
+
+Total revenue
+Total expenses
+
+The profit is calculated as:
+
+Profit = Revenue − Expenses
+
+If the company generates a profit, the IRPJ is calculated by applying the corresponding tax rate to that amount. Because the calculation uses the company's real financial results, this regime is generally more accurate but also more complex.
 
 ### Real Profit (Lucro Real)
 
@@ -44,7 +77,15 @@ Profit = Revenue - Expenses
 
 ### Presumed Profit (Lucro Presumido)
 
-The government assumes a predefined profit margin and calculates taxes based on that presumed profit instead of actual profit.
+In the Presumed Profit regime, the government assumes that a fixed percentage of the company's revenue represents profit.
+
+Instead of analyzing actual expenses, the system calculates a presumed profit:
+
+Presumed Profit = Revenue × Presumed Margin
+
+The IRPJ is then calculated based on this presumed profit value.
+
+This regime simplifies tax calculations because companies do not need to demonstrate their actual profitability for tax purposes.
 
 ---
 
