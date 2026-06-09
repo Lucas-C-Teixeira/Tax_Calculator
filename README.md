@@ -1,4 +1,4 @@
-# YOUR PROJECT TITLE
+# TaxCalculator
 #### Video Demo:  <URL HERE>
 #### Description: CS50 Final Project: A modular tax calculation system combining Flask, SQLite, and a C-based calculation engine to estimate Brazilian individual and corporate income taxes.
 
