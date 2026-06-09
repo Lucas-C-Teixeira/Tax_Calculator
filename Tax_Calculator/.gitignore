@@ -1,0 +1,14 @@
+# SQLite Database files (we only version the scripts, not the data)
+*.db
+database/taxes.db
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Environments
+venv/
+.env
+
+# VS Code settings
+.vscode/
