@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="irpf-container">
+
+    <div class="hero-section">
+        <span class="hero-badge">
+            Receita Federal • Simulação IRPF
+        </span>
+        <h1>Calculadora de IRPF</h1>
+        <p>
+            Simule seu imposto de renda mensal utilizando o cálculo progressivo oficial, 
+            descontos de INSS e dependentes.
+        </p>
+    </div>
+
+    {% if result %}
+    <div class="result-card">
+        <div class="result-label">
+            Seu IRPF Mensal Estimado
+        </div>
+        <div class="result-value">
+            {{ result }}
+        </div>
+        <p>
+            Este é o valor que será retido do seu salário este mês após a aplicação 
+            das deduções e das faixas do imposto.
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="content-grid">
+
+        <div class="calculator-card">
+            <form method="POST" id="irpfForm">
+
+                <div class="input-group">
+                    <label>Renda Mensal Bruta (Salário sem descontos)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="income"
+                        placeholder="Ex: 4500.00"
+                        value="{{ request.form.get('income', '') }}"
+                        required
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Número de Dependentes</label>
+                    <input
+                        type="number"
+                        min="0"
+                        name="dependents"
+                        placeholder="Ex: 0"
+                        value="{{ request.form.get('dependents', '0') }}"
+                        required
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Modelo de Dedução</label>
+                    <select
+                        name="deduction_mode"
+                        id="deductionMode"
+                    >
+                        <option value="simplified" {% if request.form.get('deduction_mode') == 'simplified' %}selected{% endif %}>
+                            Desconto Simplificado (Padrão)
+                        </option>
+                        <option value="personalized" {% if request.form.get('deduction_mode') == 'personalized' %}selected{% endif %}>
+                            Deduções Legais (Previdência, Saúde, etc.)
+                        </option>
+                    </select>
+                </div>
+
+                <div
+                    class="input-group"
+                    id="customDeductionGroup"
+                    style="display: none;"
+                >
+                    <label>Outras Deduções Totais (R$)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="custom_deduction"
+                        placeholder="Ex: 500.00"
+                        value="{{ request.form.get('custom_deduction', '') }}"
+                    >
+                    <small>
+                        Insira a soma de gastos dedutíveis mensais (ex: previdência privada, pensão).
+                    </small>
+                </div>
+
+                <button
+                    type="submit"
+                    class="calculate-btn"
+                    id="calculateBtn"
+                >
+                    <span id="btnText">Calcular Imposto</span>
+                    <div class="spinner" id="btnSpinner" style="display: none;"></div>
+                </button>
+
+            </form>
+        </div>
+
+        <div class="side-panel">
+            <div class="side-card">
+                <h3>Resumo do Sistema</h3>
+                <div class="status-item">
+                    <span>Cálculo</span>
+                    <strong>Tabela Progressiva</strong>
+                </div>
+                <div class="status-item">
+                    <span>INSS</span>
+                    <strong>Calculado automático</strong>
+                </div>
+            </div>
+
+            <div class="side-card">
+                <h3>Qual modelo escolher?</h3>
+                <ul style="padding-left: 20px; margin: 0;">
+                    <li style="margin-bottom: 10px;"><strong>Simplificado:</strong> Ideal para quem não tem muitos gastos com saúde ou educação. Aplica um desconto fixo garantido por lei.</li>
+                    <li><strong>Deduções Legais:</strong> Melhor se você tem despesas altas comprováveis ou paga previdência privada.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <details class="details-card" {% if result %}open{% endif %}>
+        <summary>
+            Como funciona o cálculo do meu imposto? (Clique para entender)
+        </summary>
+        <div class="details-content">
+            <h2>O Imposto de Renda não é cobrado sobre todo o seu salário!</h2>
+            <p>
+                Muitas pessoas acham que se estão na faixa de 15%, o governo leva 15% de todo o salário. <strong>Isso é um mito.</strong> 
+                O cálculo é feito por etapas (fatias) e funciona assim:
+            </p>
+
+            <h3>Etapa 1: O desconto do INSS</h3>
+            <p>
+                Antes de cobrar o Imposto de Renda, o sistema pega o seu Salário Bruto e retira a sua contribuição do INSS. 
+                O imposto de renda só morde o que sobra.
+            </p>
+            <div class="formula-box">
+                Base Inicial = Salário Bruto - INSS
+            </div>
+
+            <h3>Etapa 2: O abatimento das Deduções e Dependentes</h3>
+            <p>
+                Dessa "Base Inicial", o sistema retira mais um pedaço para te ajudar:
+            </p>
+            <ul>
+                <li>O valor por cada <strong>dependente</strong> que você cadastrou.</li>
+                <li>O modelo de desconto escolhido (o <strong>Simplificado</strong> abate um valor fixo direto para garantir a isenção de quem ganha até 2 salários mínimos).</li>
+            </ul>
+            <div class="formula-box">
+                Base Tributável (Sua renda real para o imposto) = Base Inicial - Deduções - Dependentes
+            </div>
+
+            <h3>Etapa 3: A Tabela Progressiva (O efeito cascata)</h3>
+            <p>
+                Agora, o sistema pega a sua <strong>Base Tributável</strong> e fatia ela de acordo com as regras da Receita Federal:
+            </p>
+            <ul>
+                <li>A primeira fatia (até o limite de isenção) <strong>não paga nada</strong>.</li>
+                <li>A fatia seguinte paga apenas <strong>7,5%</strong>.</li>
+                <li>A próxima fatia paga <strong>15%</strong>, e assim por diante.</li>
+            </ul>
+            <p>
+                Nossa calculadora faz exatamente esse fatiamento de forma automática através de uma engine matemática ultrarrápida escrita em C.
+            </p>
+        </div>
+    </details>
+
+</div>
+
+<style>
+/* --- ESTILOS ORIGINAIS PRESERVADOS E APERFEIÇOADOS --- */
+.irpf-container{
+    padding: 42px;
+    color: #f8fafc;
+}
+
+.hero-section{
+    margin-bottom: 36px;
+}
+
+.hero-badge{
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(37,99,235,0.18);
+    color: #93c5fd;
+    font-size: 12px;
+    border: 1px solid rgba(59,130,246,0.2);
+    margin-bottom: 18px;
+}
+
+.hero-section h1{
+    font-size: 48px;
+    margin-bottom: 14px;
+}
+
+.hero-section p{
+    max-width: 700px;
+    color: #94a3b8;
+    line-height: 1.7;
+}
+
+.content-grid{
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.calculator-card,
+.side-card,
+.result-card,
+.details-card{
+    background: rgba(2,6,23,0.88);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.calculator-card{
+    padding: 30px;
+}
+
+.side-panel{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.side-card{
+    padding: 26px;
+}
+
+.side-card h3{
+    margin-top: 0;
+    margin-bottom: 18px;
+}
+
+.status-item{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    color: #cbd5e1;
+}
+
+.input-group{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+}
+
+.input-group label{
+    margin-bottom: 10px;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.input-group input,
+.input-group select{
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: white;
+    font-size: 15px;
+    outline: none;
+    transition: 0.25s;
+}
+
+.input-group input:focus,
+.input-group select:focus{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+}
+
+.input-group select option{
+    background: #0f172a;
+}
+
+.input-group small{
+    color: #64748b;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+/* --- ESTILO DO BOTÃO E SPINNER DE ANIMAÇÃO --- */
+.calculate-btn{
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.25s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.calculate-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(37,99,235,0.35);
+}
+
+.calculate-btn:disabled {
+    background: #1e293b;
+    color: #64748b;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- ESTILO DO CARD DE RESULTADO NO TOPO --- */
+.result-card{
+    padding: 34px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    background: linear-gradient(180deg, rgba(2,6,23,0.95) 0%, rgba(15,23,42,0.9) 100%);
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.result-label{
+    color: #94a3b8;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.result-value{
+    font-size: 54px;
+    font-weight: 800;
+    color: #4ade80; /* Verde para destacar o resultado */
+    margin-bottom: 16px;
+}
+
+.result-card p{
+    color: #cbd5e1;
+    margin: 0;
+}
+
+@keyframes fadeUp{
+    from{ opacity: 0; transform: translateY(-15px); }
+    to{ opacity: 1; transform: translateY(0); }
+}
+
+.details-card{
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.details-card summary{
+    padding: 26px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 17px;
+    color: #93c5fd;
+}
+
+.details-content{
+    padding: 0 26px 30px 26px;
+    color: #cbd5e1;
+    line-height: 1.9;
+}
+
+.details-content h2{
+    margin-top: 20px;
+    margin-bottom: 14px;
+    color: white;
+    font-size: 22px;
+}
+
+.details-content h3{
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: #f1f5f9;
+}
+
+.formula-box{
+    margin: 18px 0;
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: #3b82f6;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+@media(max-width: 950px){
+    .content-grid{ grid-template-columns: 1fr; }
+    .result-value{ font-size: 42px; }
+}
+</style>
+
+<script>
+const form = document.getElementById('irpfForm');
+const button = document.getElementById('calculateBtn');
+const btnText = document.getElementById('btnText');
+const btnSpinner = document.getElementById('btnSpinner');
+const deductionMode = document.getElementById('deductionMode');
+const customGroup = document.getElementById('customDeductionGroup');
+
+// Controla exibição das Deduções Legais / Personalizadas
+function toggleDeductionField() {
+    if (deductionMode.value === 'personalized') {
+        customGroup.style.display = 'flex';
+        customGroup.querySelector('input').setAttribute('required', 'required');
+    } else {
+        customGroup.style.display = 'none';
+        customGroup.querySelector('input').removeAttribute('required');
+    }
+}
+
+deductionMode.addEventListener('change', toggleDeductionField);
+document.addEventListener('DOMContentLoaded', toggleDeductionField);
+
+// ANIMAÇÃO DE SIMULAÇÃO DE CÁLCULO (Atrasa o envio em 1.2s para mostrar o processamento)
+form.addEventListener('submit', (e) => {
+    // Se já estiver carregando, não faz nada
+    if (button.disabled) return;
+
+    e.preventDefault(); // Segura o envio do form temporariamente
+    
+    button.disabled = true;
+    btnText.innerHTML = 'Processando engine em C...';
+    btnSpinner.style.display = 'block';
+
+    // Cria a sensação de que o cálculo complexo está rodando no backend
+    setTimeout(() => {
+        form.submit(); // Dispara o POST real para o Flask após a animação
+    }, 1200);
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,49 @@
+#ifndef IRPJ_H
+#define IRPJ_H
+
+#ifdef _WIN32
+    #define TAX_API __declspec(dllexport)
+#else
+    #define TAX_API
+#endif
+
+typedef enum {
+    REAL_PROFIT = 1,
+    PRESUMED_PROFIT = 2
+} TaxRegime;
+
+typedef enum {
+    MONTHLY = 1,
+    QUARTERLY = 2,
+    ANNUAL = 3
+} TaxPeriod;
+
+#define SUCCESS             0
+#define ERR_INVALID_REGIME -1
+#define ERR_INVALID_MARGIN -2
+#define ERR_INVALID_INPUT  -3
+#define ERR_NULL_POINTER   -4
+
+
+
+typedef struct {
+
+    TaxRegime regime;
+
+    double revenue;
+
+    double expenses;
+
+    double margin;
+
+    int period;
+
+} Company;
+
+
+TAX_API int calculate_irpj(
+    Company c,
+    double *irpj
+);
+
+#endif

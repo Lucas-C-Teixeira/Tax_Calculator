@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Acesso Restrito{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col items-center justify-center">
+    
+    <div class="mb-8 text-center">
+        <div class="inline-flex p-4 rounded-3xl bg-blue-600 text-white shadow-lg shadow-blue-200 mb-4">
+            <i data-lucide="calculator" class="w-10 h-10"></i>
+        </div>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">TaxCalculator</h1>
+        <p class="text-slate-500 font-medium">Descubra a simplicidade do cálculo fiscal</p>
+    </div>
+
+    <div class="w-full max-w-md glass-card rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center gap-3 animate-bounce">
+                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="/login" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Usuário</label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <input type="text" name="username" required autofocus
+                        class="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                        placeholder="Ex: admin">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Senha</label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </div>
+                    <input type="password" name="password" required
+                        class="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" 
+                class="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-bold text-lg hover:bg-blue-600 shadow-xl shadow-slate-900/20 hover:shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                <span>Entrar no Sistema</span>
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center pt-2">
+
+    <p class="text-sm text-slate-500">
+        Ainda não possui conta?
+    </p>
+
+    <a
+        href="/register"
+
+        class="inline-flex mt-2 text-blue-600 hover:text-blue-700 font-bold transition-colors"
+    >
+        Criar conta
+    </a>
+
+</div>
+        </form>
+    </div>
+</div>
+{% endblock %}

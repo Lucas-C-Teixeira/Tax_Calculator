@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Criar Conta{% endblock %}
+
+{% block content %}
+
+<div class="min-h-[80vh] flex items-center justify-center">
+
+    <div class="w-full max-w-md">
+
+        <!-- HEADER -->
+        <div class="text-center mb-8">
+
+            <div class="inline-flex p-4 rounded-3xl bg-blue-600 text-white shadow-lg shadow-blue-200 mb-4">
+                <i data-lucide="user-plus" class="w-10 h-10"></i>
+            </div>
+
+            <h1 class="text-4xl font-extrabold tracking-tight text-slate-900">
+                Criar Conta
+            </h1>
+
+            <p class="text-slate-500 mt-2">
+                Comece a utilizar o TaxCalculator
+            </p>
+
+        </div>
+
+
+        <!-- CARD -->
+        <div class="glass-card rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50">
+
+            <!-- FLASH -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+
+                        <div class="mb-6 p-4 rounded-2xl border border-red-100 bg-red-50 text-red-600 flex items-center gap-3 text-sm font-semibold">
+                            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                            {{ message }}
+                        </div>
+
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+
+            <!-- FORM -->
+            <form action="/register" method="POST" class="space-y-6">
+
+                <!-- EMAIL -->
+                <div>
+
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                        E-mail
+                    </label>
+
+                    <div class="relative">
+
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </div>
+
+                        <input
+                            type="email"
+                            name="email"
+                            required
+
+                            class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+
+                            placeholder="voce@email.com"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- SENHA -->
+                <div>
+
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                        Senha
+                    </label>
+
+                    <div class="relative">
+
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </div>
+
+                        <input
+                            type="password"
+                            name="password"
+                            required
+
+                            class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+
+                            placeholder="********"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- CONFIRMAR -->
+                <div>
+
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                        Confirmar Senha
+                    </label>
+
+                    <div class="relative">
+
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+                            <i data-lucide="shield-check" class="w-5 h-5"></i>
+                        </div>
+
+                        <input
+                            type="password"
+                            name="confirm_password"
+                            required
+
+                            class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+
+                            placeholder="********"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- BUTTON -->
+                <button
+                    type="submit"
+
+                    class="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-slate-900/20 hover:shadow-blue-500/30 flex items-center justify-center gap-3"
+                >
+
+                    Criar Conta
+
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+
+                </button>
+
+            </form>
+
+
+            <!-- FOOTER -->
+            <div class="mt-8 text-center">
+
+                <p class="text-slate-500 text-sm">
+                    Já possui conta?
+                </p>
+
+                <a
+                    href="/login"
+
+                    class="inline-flex mt-3 text-blue-600 hover:text-blue-700 font-bold transition-colors"
+                >
+                    Entrar no sistema
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
