@@ -206,7 +206,7 @@ CNPJ is the Brazilian taxpayer identification number for businesses.
 ## Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/Tax_Calculator.git
+git clone https://github.com/Lucas-C-Teixeira/Tax_Calculator.git
 cd Tax_Calculator
 ```
 
