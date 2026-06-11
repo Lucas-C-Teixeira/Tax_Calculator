@@ -1,5 +1,5 @@
 # TaxCalculator
-#### Video Demo:  <[URL HERE](https://youtu.be/tFD_F664FVs)>
+#### Video Demo:  (https://youtu.be/tFD_F664FVs)
 #### Description: CS50 Final Project: A modular tax calculation system combining Flask, SQLite, and a C-based calculation engine to estimate Brazilian individual and corporate income taxes.
 
 
